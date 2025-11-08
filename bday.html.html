@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>You've leveled up!</title>
+  <style>
+    :root{
+      --bg1:#0b1435;
+      --bg2:#775ba6;
+      --accent:#4b9cf3;
+      --soft:#dbe9ff;
+      --glass: rgba(255,255,255,0.06);
+    }
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#fff;scroll-behavior:smooth;}
+    body{
+      background: linear-gradient(160deg,var(--bg1) 0%, #24123f 40%, var(--bg2) 100%);
+      position:relative; overflow-x:hidden;
+    }
+
+    /* Canvas full-bleed star background */
+    canvas#stars{
+      position:fixed; inset:0; z-index:0; display:block;
+      pointer-events:none;
+    }
+
+    .wrap{
+      position:relative; z-index:2; min-height:100vh; display:flex; flex-direction:column; align-items:center;
+      gap:6vh; padding:8vh 6vw;
+      backdrop-filter: blur(6px);
+    }
+
+    header.hero{
+      text-align:center; width:100%; max-width:980px;
+      padding:4rem 2rem; border-radius:16px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 8px 30px rgba(15,15,40,0.5), inset 0 1px 0 rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    h1.title{
+      font-size: clamp(2rem, 6vw, 4.4rem); margin:0 0 .6rem; letter-spacing: -0.02em;
+      color:#fff; text-shadow: 0 6px 30px rgba(130,94,255,0.35);
+      filter: drop-shadow(0 6px 24px rgba(80,60,200,0.25));
+      line-height:1;
+      transform-origin:center;
+      animation: floatText 6s ease-in-out infinite;
+      cursor:text;
+    }
+    @keyframes floatText{
+      0%,100%{ transform: translateY(0) scale(1); }
+      50%{ transform: translateY(-6px) scale(1.01); }
+    }
+
+    p.lead{
+      margin:0; color:var(--soft); font-size:1.05rem; opacity:0.95;
+      text-shadow: 0 2px 12px rgba(120,100,220,0.18);
+      cursor:text;
+    }
+
+    /* glowing subtitle */
+    .glow{
+      display:inline-block;
+      padding: .2rem .5rem;
+      border-radius:10px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 6px 30px rgba(120,70,255,0.12), 0 0 40px rgba(140,120,255,0.06) inset;
+      animation: softGlow 3.6s ease-in-out infinite;
+    }
+    @keyframes softGlow{
+      0%,100%{ box-shadow: 0 6px 30px rgba(120,70,255,0.08), 0 0 24px rgba(140,120,255,0.04) inset; transform:scale(1); }
+      50%{ box-shadow: 0 14px 60px rgba(120,70,255,0.18), 0 0 48px rgba(140,120,255,0.08) inset; transform:scale(1.01); }
+    }
+
+    section.card{
+      width:100%; max-width:980px; padding:2.4rem; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.04); box-shadow: 0 8px 30px rgba(10,10,40,0.45);
+    }
+
+    .message h2{
+      margin:0 0 .6rem; font-size:1.6rem; color:#fff; text-shadow: 0 8px 30px rgba(100,80,220,0.18);
+      cursor:text;
+    }
+    .message p{ margin:0 0 1rem; opacity:0.95; color:var(--soft); cursor:text; line-height:1.7; }
+
+    .photo-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+
+    .photo-preview {
+      width: 300px;
+      height: 300px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 8px 30px rgba(10,10,40,0.45);
+    }
+
+    .photo-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Gift box styles */
+    .gift-box {
+      width: 220px;
+      height: 180px;
+      background: linear-gradient(135deg, #ffd700, #ffb300);
+      position: relative;
+      margin: 3rem auto;
+      cursor: pointer;
+      transition: transform 0.3s;
+      overflow: visible;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .gift-box::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 30px;
+      background: #ffe44d;
+      top: -15px;
+      border-radius: 5px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .gift-box {
+      background-image: 
+        linear-gradient(135deg, #ffd700, #ffb300),
+        repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 10px,
+          rgba(255, 200, 0, 0.2) 10px,
+          rgba(255, 200, 0, 0.2) 20px
+        );
+    }
+
+    .gift-box:hover {
+      transform: scale(1.05);
+    }
+
+    .ribbon {
+      position: absolute;
+      width: 50px;
+      height: calc(100% + 25px);
+      background: #ff0000;
+      left: 50%;
+      top: -25px;
+      transform: translateX(-50%);
+      box-shadow: 0 5px 15px rgba(255,0,0,0.2);
+    }
+
+    .bow {
+      position: absolute;
+      width: 80px;
+      height: 40px;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+
+    .bow-loop {
+      position: absolute;
+      width: 35px;
+      height: 35px;
+      background: #ff0000;
+      border-radius: 0 35px 35px 0;
+      top: 0;
+    }
+
+    .bow-loop:first-child {
+      left: 40px;
+      transform: rotate(50deg);
+    }
+
+    .bow-loop:nth-child(2) {
+      left: 5px;
+      transform: rotate(-50deg) scaleX(-1);
+    }
+
+    .bow-center {
+      position: absolute;
+      width: 20px;
+      height: 25px;
+      background: #ff0000;
+      left: 30px;
+      top: 5px;
+      border-radius: 5px;
+      transform: rotate(45deg);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .ribbon-horizontal {
+      position: absolute;
+      height: 50px;
+      width: calc(100% + 20px);
+      background: #ff0000;
+      top: 50%;
+      left: -10px;
+      transform: translateY(-50%);
+      box-shadow: 0 5px 15px rgba(255,0,0,0.2);
+    }
+
+    .gift-wrapper {
+      min-height: 220px;
+    }
+
+    .gift-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.5s ease-in-out;
+    }
+
+    .gift-content img {
+      width: 220px;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 10px;
+      transform: scale(0.8);
+      transition: transform 0.5s ease-in-out;
+    }
+
+    .gift-box {
+      transition: all 0.5s ease-in-out;
+      transform-origin: center;
+    }
+
+    .gift-box.opened {
+      transform: scale(0);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .gift-box.opened ~ .gift-content {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .gift-box.opened ~ .gift-content img {
+      transform: scale(1);
+      animation: revealPicture 0.8s ease-out;
+    }
+
+    @keyframes revealPicture {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .final{
+      text-align:center; font-size:1.2rem; color:var(--soft); padding:2rem 1rem; border-radius:12px;
+    }
+
+    footer{
+      margin-top:2rem; text-align:center; color:rgba(255,255,255,0.85); opacity:0.95; font-size:.95rem;
+      width:100%; max-width:980px;
+    }
+
+    /* make contenteditable obvious */
+    [contenteditable]{ outline: none; caret-color: #fff; }
+    [contenteditable]:focus{ box-shadow: 0 8px 30px rgba(140,110,255,0.12); border-radius:6px; }
+
+    
+
+  </style>
+</head>
+<body>
+
+  <main class="wrap">
+    <header class="hero card">
+      <h1 class="title glow" contenteditable="true" aria-label="Title">You've Leveled Up!</h1>
+      <p class="lead" contenteditable="true" aria-label="Small message">Happy Birthday, Gokuljiii 🤍</p>
+    </header>
+
+    <section class="card message" id="message">
+      <h2 contenteditable="true">🌸-Level 22-🌸</h2>
+      <p contenteditable="true">As you step into this new chapter of 22, I hope you remember that every dream of yours is worth fighting for. You have so much potential — don’t let doubts dim your fire. Keep believing in yourself, even on the days that feel heavy. I’ll always be here, cheering you on, reminding you how capable, brilliant, and loved you are.</p>
+
+    </section>
+
+    <section class="card">
+      <h2 style="text-align: center; margin-bottom: 1.5rem; color: #fff; text-shadow: 0 8px 30px rgba(100,80,220,0.18);">Caution: Don't eat the pastry!</h2>
+      <div class="photo-area">
+        <div class="photo-preview">
+          <img id="previewImage" src="OIP (1).jpeg" alt="Special image">
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="perspective: 1000px;">
+      <h2 style="text-align: center; margin-bottom: 2rem; color: #fff; text-shadow: 0 8px 30px rgba(100,80,220,0.18);"> Favorite Memory of Us </h2>
+      <div class="gift-wrapper" style="position: relative;">
+        <div class="gift-box" id="giftBox" onclick="this.classList.add('opened')">
+          <div class="bow">
+            <div class="bow-loop"></div>
+            <div class="bow-loop"></div>
+            <div class="bow-center"></div>
+          </div>
+          <div class="ribbon"></div>
+          <div class="ribbon-horizontal"></div>
+          <div style="text-align: center; margin-top: 1rem; color: var(--soft)">Tap to Open</div>
+        </div>
+        <div class="gift-content">
+          <img src="nnk.jpg" alt="Special reveal image">
+        </div>
+      </div>
+    </section>
+
+    <section class="card final">
+      <div contenteditable="true" style="font-weight:600; font-size:1.15rem;"> My life's been happier ever since you came and that's why ... You're My Luckycharm💫</div>
+      <div style="margin-top:.6rem; opacity:.9">Always Yours.</div>
+    </section>
+
+    <footer>Made with 💜 by your girl</footer>
+  </main>
+
+
+
+  <script>
+    // Simple animated starfield on canvas with gentle twinkle & mouse parallax
+    (function(){
+      const canvas = document.getElementById('stars');
+      const ctx = canvas.getContext('2d');
+      let W = canvas.width = innerWidth;
+      let H = canvas.height = innerHeight;
+      const DPR = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = W * DPR; canvas.height = H * DPR;
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      ctx.scale(DPR, DPR);
+
+      const STAR_COUNT = Math.round((W*H)/7000);
+      const stars = [];
+      let mx = W/2, my = H/2;
+
+      function rand(min,max){ return Math.random()*(max-min)+min; }
+
+      function createStar(){
+        return {
+          x: Math.random()*W,
+          y: Math.random()*H,
+          r: rand(0.4,2.4),
+          alpha: rand(0.2,0.95),
+          pulse: rand(0.001,0.01),
+          vx: rand(-0.02,0.02),
+          vy: rand(-0.02,0.02),
+          hue: rand(220,290)
+        };
+      }
+
+      for(let i=0;i<STAR_COUNT;i++) stars.push(createStar());
+
+      function resize(){
+        W = canvas.width = innerWidth;
+        H = canvas.height = innerHeight;
+        canvas.width = W * DPR; canvas.height = H * DPR;
+        canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+        ctx.scale(DPR, DPR);
+      }
+
+      window.addEventListener('resize', () => { resize(); });
+
+      // Parallax on mouse
+      window.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
+
+      function draw(){
+        ctx.clearRect(0,0,W,H);
+
+        // subtle gradient overlay to enhance color
+        const g = ctx.createLinearGradient(0,0,W,H);
+        g.addColorStop(0,'rgba(70,40,160,0.06)');
+        g.addColorStop(1,'rgba(10,10,30,0.06)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0,0,W,H);
+
+        for(let s of stars){
+          // twinkle
+          s.alpha += Math.sin(performance.now()*0.001*s.pulse) * s.pulse*8;
+          s.alpha = Math.max(0.05, Math.min(1, s.alpha));
+
+          // slight drift + parallax (based on mouse)
+          const dx = (mx - W/2) * 0.00008 * s.r;
+          const dy = (my - H/2) * 0.00008 * s.r;
+          s.x += s.vx + dx;
+          s.y += s.vy + dy;
+
+          if(s.x < -10) s.x = W+10;
+          if(s.x > W+10) s.x = -10;
+          if(s.y < -10) s.y = H+10;
+          if(s.y > H+10) s.y = -10;
+
+          // draw glow star
+          const grd = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, Math.max(8, s.r*12));
+          const hue = Math.floor(s.hue);
+          grd.addColorStop(0, `hsla(${hue},100%,85%,${s.alpha})`);
+          grd.addColorStop(0.2, `hsla(${hue},95%,70%,${s.alpha*0.6})`);
+          grd.addColorStop(0.6, `hsla(${hue+20},80%,55%,${s.alpha*0.12})`);
+          grd.addColorStop(1, `rgba(0,0,0,0)`);
+          ctx.fillStyle = grd;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, Math.max(6, s.r*10), 0, Math.PI*2);
+          ctx.fill();
+        }
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    // Gift box interaction
+    document.getElementById('giftBox').addEventListener('click', function() {
+      this.classList.add('opened');
+      // Play a subtle sound effect
+      const audio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAUAAAiSAAODg4ODhsbGxsbKCgoKCg1NTU1NUVFRUVFTU1NTU1aWlpaWmdnZ2dnZ3R0dHR0goKCgoKPj4+Pj5ycnJycsLCwsLDAwMDAwM3Nzc3N2tra2tre3t7e3u7u7u7u+/v7+/v///////////8AAAAATGF2YzU4LjU0AAAAAAAAAAAAAAAAJAAAAAAAAAAAIkjQ+JmWAAAAAAAAAAAAAAAAAAAA//PEAAABT3JpZ2luYWxQcm9kdWNlcgBlbmdpbmVlcgAAAAAAAAAAAABMYXZmNTguMjkuMTAwAAAAAAAAAAAAAAD/80DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/80LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/80DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/80LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/80DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/80LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=');
+      audio.play();
+    });
+  </script>
+</body>
+</html>
